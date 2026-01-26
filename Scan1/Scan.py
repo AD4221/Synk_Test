@@ -6,7 +6,7 @@ import requests
 app = Flask(__name__)
 
 # Misconfiguration 1: Hardcoded credentials
-API_KEY = "${API_KEY}"
+API_KEY = os.getenv('API_KEY')
 DB_PASSWORD = "admin123"
 
 # Misconfiguration 2: Insecure database connection
