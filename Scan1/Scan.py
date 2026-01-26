@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 # Misconfiguration 1: Hardcoded credentials
 API_KEY = os.getenv('API_KEY')
-DB_PASSWORD = "admin123"
+DB_PASSWORD = os.getenv('DB_PASSWORD')
 
 # Misconfiguration 2: Insecure database connection
 conn = sqlite3.connect(':memory:')
