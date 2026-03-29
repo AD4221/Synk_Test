@@ -1,0 +1,48 @@
+const express = require("express");
+const _ = require("lodash");
+const minimist = require("minimist");
+const yaml = require("js-yaml");
+const fs = require("fs");
+const { exec } = require("child_process");
+
+const app = express();
+app.use(express.json());
+
+// Vulnerable dependency usage target
+const args = minimist(process.argv.slice(2));
+
+// Snyk Code may flag command injection here
+app.get("/run", (req, res) => {
+  const cmd = req.query.cmd;
+  exec(cmd, (err, stdout, stderr) => {
+    if (err) {
+      return res.status(500).send(stderr || err.message);
+    }
+    res.send(stdout);
+  });
+});
+
+// Snyk Code may flag unsafe deserialization / risky parsing
+app.post("/yaml", (req, res) => {
+  const doc = req.body.data;
+  const parsed = yaml.load(doc);
+  res.json(parsed);
+});
+
+// Snyk Code may flag path traversal
+app.get("/read", (req, res) => {
+  const file = req.query.file;
+  const content = fs.readFileSync(file, "utf8");
+  res.send(content);
+});
+
+// Prototype pollution style merge pattern
+app.post("/merge", (req, res) => {
+  const target = {};
+  _.merge(target, req.body);
+  res.json(target);
+});
+
+app.listen(3000, () => {
+  console.log("Test app running on port 3000");
+});
