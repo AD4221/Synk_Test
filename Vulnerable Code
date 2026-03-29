@@ -1,4 +1,76 @@
 const express = require("express");
+const { exec } = require("child_process");
+const mysql = require("mysql2");
+const app = express();
+
+app.use(express.json());
+
+const db = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "password",
+  database: "testdb"
+});
+
+// SQL Injection
+app.get("/user", (req, res) => {
+  const id = req.query.id;
+  const query = "SELECT * FROM users WHERE id = '" + id + "'";
+  db.query(query, (err, results) => {
+    if (err) {
+      return res.status(500).send(err.message);
+    }
+    res.json(results);
+  });
+});
+
+// Command Injection
+app.get("/ping", (req, res) => {
+  const host = req.query.host;
+  exec("ping -c 1 " + host, (err, stdout, stderr) => {
+    if (err) {
+      return res.status(500).send(stderr || err.message);
+    }
+    res.send(stdout);
+  });
+});
+
+// Reflected XSS
+app.get("/search", (req, res) => {
+  const term = req.query.term;
+  res.send("<h1>Search results for: " + term + "</h1>");
+});
+
+// NoSQL-style dangerous usage pattern
+app.post("/login", (req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
+
+  const query = {
+    username: username,
+    password: password
+  };
+
+  // Mock dangerous pattern for SAST detection
+  if (query.username && query.password) {
+    res.send("Logged in");
+  } else {
+    res.status(401).send("Unauthorized");
+  }
+});
+
+// Path Traversal
+const fs = require("fs");
+app.get("/readfile", (req, res) => {
+  const file = req.query.file;
+  const data = fs.readFileSync("./files/" + file, "utf8");
+  res.send(data);
+});
+
+app.listen(3000, () => {
+  console.log("Vulnerable test app running on port 3000");
+});
+const express = require("express");
 const _ = require("lodash");
 const minimist = require("minimist");
 const yaml = require("js-yaml");
